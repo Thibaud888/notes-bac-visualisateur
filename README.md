@@ -13,15 +13,30 @@ moyenne, la mention, les marges et la répartition par coefficients.
 - **En local** : ouvrir `index.html` dans un navigateur (double‑clic). Tout fonctionne hors‑ligne.
 - **En ligne** : voir la section *Déploiement* (GitHub Pages).
 
-Pilotage :
+Pilotage (panneau de droite) :
 - **Curseurs (0–20, pas de 0,25)** ou champ numérique pour chaque matière.
 - **Cadenas 🔒 / 🔓** : fige une note « sûre » (déjà obtenue) ou la laisse variable. Les scénarios et
   le calcul d'objectif ne touchent **jamais** aux notes figées.
-- **Camembert pondéré** : bascule entre *Poids (coefficients)* et *Contribution (note × coef)*.
-- **Scénarios rapides**, **objectif de mention**, **tableau de levier** (où gagner le plus de points),
-  **lien partageable** et **impression/PDF**.
-- L'état (notes, cadenas, libellés) est **sauvegardé automatiquement** (localStorage) et peut être
-  partagé via un lien (`#s=…`).
+- **Scénarios rapides**, **objectif de mention**, **top 3 des leviers**, **lien partageable** et
+  **impression/PDF**.
+- L'état (notes, cadenas, libellés, réglages) est **sauvegardé automatiquement** (localStorage) et peut
+  être partagé via un lien (`#s=…`).
+
+## Visualisations (panneau de gauche, défilement indépendant)
+
+Un en-tête fixe (moyenne /20 + mention) surmonte **4 onglets** :
+
+- **🥧 Camembert** (vue principale). Trois réglages :
+  - *100 % =* **Contribution** (note × coef, par défaut) · **Objectif** (le cercle plein = la mention
+    visée ; il reste un arc gris « à gagner » tant que l'objectif n'est pas atteint) · **Poids** (coef).
+  - *Colorer par* **Matière** · **Domaine** · **Type d'épreuve** (contrôle continu / écrit / oral).
+  - *🔒 Focus figées* : met en avant les notes verrouillées (le reste est estompé). Les notes figées
+    sont **hachurées** quel que soit le mode. Les grandes parts affichent leur nom directement.
+- **🕸️ Domaines** : radar des moyennes par domaine, avec le contour de l'objectif en pointillés.
+- **📊 Détail** : barres triées par matière (contribution en points, ou note /20).
+- **🎯 Objectif** : **barre de comparaison** (référence = seuil de la mention visée ; tes points
+  empilés, figées en couleur vive + variables estompées — si la pile dépasse la référence, c'est
+  gagné), **poids par bloc** (largeur ∝ coefficient) et **échelle des mentions**.
 
 ## Comment la note est calculée
 
@@ -61,6 +76,12 @@ moyenne = Σ(note × coef) / Σ(coef)          (ici Σ coef = 104)
 > Les enseignements de contrôle continu suivis sur les deux ans (Hist‑Géo, LVA, LVB, Ens. scientifique,
 > EMC) sont scindés dans l'appli en **deux notes 1re / Tle** (coef divisé), pour pouvoir **figer** la
 > partie déjà connue.
+>
+> **Options (maths expertes, musique)** : elles comptent **coef 2 chacune en moyenne pondérée** (ajoutées
+> au 100 → 104). Contrairement à l'**ancien bac (avant 2020)**, ce n'est **plus** un bonus « points
+> au‑dessus de 10 » : une note **inférieure à 10 fait baisser** la moyenne (faiblement, le coefficient
+> étant bas). Sources : [education.gouv — calcul de la note](https://www.education.gouv.fr/reussir-au-lycee/comment-calculer-votre-note-au-baccalaureat-325511),
+> [éduscol — contrôle continu](https://eduscol.education.gouv.fr/5676/le-controle-continu-des-candidats-scolaires-au-baccalaureat-general-ou-technologique).
 
 ### Mentions
 
