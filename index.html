@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mon Bac 2027 — Simulateur de moyenne</title>
+  <meta name="description" content="Simulateur dynamique de la moyenne au baccalauréat général, session 2027." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>🎓 Mon Bac 2027 <span class="sub">— simulateur de moyenne</span></h1>
+      <p class="profile">
+        Première en 2025‑2026 · Terminale en 2026‑2027 ·
+        Spécialités <strong>Physique‑Chimie</strong> &amp; <strong>Maths</strong> ·
+        SVT abandonnée en 1re · Options <strong>Maths expertes</strong> &amp; <strong>Musique</strong>
+      </p>
+    </div>
+  </header>
+
+  <main class="wrap layout">
+    <!-- ================= COLONNE VISUALISATION (sticky) ================= -->
+    <section class="viz" aria-label="Synthèse des résultats">
+      <!-- Moyenne + jauge -->
+      <div class="card gauge-card">
+        <div class="gauge" id="gauge"><!-- SVG injecté --></div>
+        <div class="gauge-meta">
+          <div class="mention-badge" id="mentionBadge">—</div>
+          <p class="mention-status" id="mentionStatus"></p>
+          <p class="mention-next" id="mentionNext"></p>
+        </div>
+      </div>
+
+      <!-- Cartes par bloc -->
+      <div class="blocks" id="blocks" aria-label="Répartition par bloc"></div>
+
+      <!-- Échelle des mentions -->
+      <div class="card">
+        <h2 class="card-title">Échelle des mentions</h2>
+        <div class="scale" id="scale"><!-- SVG injecté --></div>
+      </div>
+
+      <!-- Camembert pondéré -->
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">Camembert pondéré</h2>
+          <div class="toggle" role="tablist" aria-label="Mode du camembert">
+            <button id="modeCoef" class="toggle-btn active" role="tab" aria-selected="true">Poids (coef)</button>
+            <button id="modeContrib" class="toggle-btn" role="tab" aria-selected="false">Contribution (note × coef)</button>
+          </div>
+        </div>
+        <div class="donut-wrap">
+          <div class="donut" id="donut"><!-- SVG injecté --></div>
+          <ul class="legend" id="legend"></ul>
+        </div>
+        <p class="tooltip" id="donutTip" hidden></p>
+      </div>
+    </section>
+
+    <!-- ================= COLONNE PILOTAGE ================= -->
+    <section class="controls" aria-label="Réglage des notes">
+      <div class="card scenarios">
+        <h2 class="card-title">Scénarios rapides</h2>
+        <div class="btn-row">
+          <button class="btn" data-scenario="reset">↺ Réinitialiser (10)</button>
+          <button class="btn" data-scenario="10">Tout à 10</button>
+          <button class="btn" data-scenario="12">Tout à 12</button>
+          <button class="btn" data-scenario="14">Tout à 14</button>
+          <button class="btn" data-scenario="opt">Optimiste (+2)</button>
+          <button class="btn" data-scenario="pess">Pessimiste (−2)</button>
+        </div>
+        <p class="hint">Les scénarios n'affectent que les notes <em>variables</em> (cadenas ouvert 🔓). Verrouille 🔒 une note pour la figer.</p>
+      </div>
+
+      <!-- Objectif mention -->
+      <div class="card objectif">
+        <h2 class="card-title">🎯 Objectif</h2>
+        <label class="obj-row">
+          Je vise&nbsp;:
+          <select id="targetSelect">
+            <option value="10">Admission (10)</option>
+            <option value="12">Mention Assez bien (12)</option>
+            <option value="14" selected>Mention Bien (14)</option>
+            <option value="16">Mention Très bien (16)</option>
+            <option value="18">TB + félicitations (18)</option>
+          </select>
+        </label>
+        <p class="obj-result" id="objResult"></p>
+      </div>
+
+      <!-- Sliders, injectés par groupe -->
+      <div id="groups"></div>
+
+      <!-- Levier -->
+      <div class="card leverage">
+        <h2 class="card-title">💪 Où mettre l'énergie&nbsp;?</h2>
+        <p class="hint">Effet d'<strong>+1 point</strong> sur la moyenne finale, par matière (notes variables d'abord).</p>
+        <ol class="leverage-list" id="leverageList"></ol>
+      </div>
+
+      <div class="card actions-card">
+        <div class="btn-row">
+          <button class="btn ghost" id="shareBtn">🔗 Copier le lien de ma simulation</button>
+          <button class="btn ghost" id="printBtn">🖨️ Imprimer / PDF</button>
+        </div>
+        <p class="hint" id="shareHint"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <h2>Comment c'est calculé&nbsp;?</h2>
+      <p>
+        Bac général <strong>session 2027</strong> : 100 coefficients de base (40 de contrôle continu + 60 d'épreuves),
+        plus les options. La moyenne affichée est la moyenne pondérée
+        <code>Σ(note × coef) / <span id="totalCoefTxt">104</span></code>.
+        Spécificité 2027 : épreuve <strong>anticipée de maths</strong> (coef 2) en 1re et <strong>Grand oral coef 8</strong>.
+      </p>
+      <p class="disclaimer">
+        ⚠️ Outil de simulation indicatif. Les règles exactes du jury (arrondis, oral de rattrapage du 2ᵉ groupe,
+        félicitations) sont simplifiées. Vérifie toujours auprès de ton établissement.
+      </p>
+      <p class="sources">Sources officielles&nbsp;:
+        <a href="https://www.education.gouv.fr/reussir-au-lycee/comment-calculer-votre-note-au-baccalaureat-325511" target="_blank" rel="noopener">education.gouv.fr — calcul de la note</a> ·
+        <a href="https://eduscol.education.fr/727/detail-des-epreuves-du-baccalaureat-general" target="_blank" rel="noopener">éduscol — épreuves</a> ·
+        <a href="https://eduscol.education.gouv.fr/5688/epreuve-anticipee-de-mathematiques-aux-baccalaureats-general-et-technologique" target="_blank" rel="noopener">éduscol — épreuve anticipée de maths</a> ·
+        <a href="https://eduscol.education.gouv.fr/5676/le-controle-continu-des-candidats-scolaires-au-baccalaureat-general-ou-technologique" target="_blank" rel="noopener">éduscol — contrôle continu</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

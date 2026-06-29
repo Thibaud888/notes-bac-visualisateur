@@ -1,0 +1,8 @@
+# Dépendances éventuelles d'outillage (le site lui-même n'en a aucune)
+node_modules/
+package.json
+package-lock.json
+
+# Artefacts
+*.log
+.DS_Store
