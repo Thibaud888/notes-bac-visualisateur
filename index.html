@@ -21,10 +21,10 @@
   </header>
 
   <main class="wrap layout">
-    <!-- ================= COLONNE VISUALISATION (sticky) ================= -->
-    <section class="viz" aria-label="Synthèse des résultats">
-      <!-- Moyenne + jauge -->
-      <div class="card gauge-card">
+    <!-- ================= COLONNE VISUALISATION ================= -->
+    <section class="viz" aria-label="Visualisations">
+      <!-- En-tête fixe : moyenne + mention -->
+      <div class="viz-head">
         <div class="gauge" id="gauge"><!-- SVG injecté --></div>
         <div class="gauge-meta">
           <div class="mention-badge" id="mentionBadge">—</div>
@@ -33,29 +33,82 @@
         </div>
       </div>
 
-      <!-- Cartes par bloc -->
-      <div class="blocks" id="blocks" aria-label="Répartition par bloc"></div>
-
-      <!-- Échelle des mentions -->
-      <div class="card">
-        <h2 class="card-title">Échelle des mentions</h2>
-        <div class="scale" id="scale"><!-- SVG injecté --></div>
+      <!-- Onglets -->
+      <div class="tabs" role="tablist" aria-label="Vues">
+        <button class="tab-btn active" data-tab="pie" role="tab" aria-selected="true">🥧 Camembert</button>
+        <button class="tab-btn" data-tab="radar" role="tab" aria-selected="false">🕸️ Domaines</button>
+        <button class="tab-btn" data-tab="bars" role="tab" aria-selected="false">📊 Détail</button>
+        <button class="tab-btn" data-tab="objectif" role="tab" aria-selected="false">🎯 Objectif</button>
       </div>
 
-      <!-- Camembert pondéré -->
-      <div class="card">
-        <div class="card-head">
-          <h2 class="card-title">Camembert pondéré</h2>
-          <div class="toggle" role="tablist" aria-label="Mode du camembert">
-            <button id="modeCoef" class="toggle-btn active" role="tab" aria-selected="true">Poids (coef)</button>
-            <button id="modeContrib" class="toggle-btn" role="tab" aria-selected="false">Contribution (note × coef)</button>
+      <div class="tab-content">
+        <!-- ---- Onglet Camembert ---- -->
+        <section class="tab-panel active" data-panel="pie" role="tabpanel">
+          <div class="toolbar">
+            <div class="tb-group">
+              <span class="tb-label">100 % =</span>
+              <div class="seg" id="donutViewSeg" role="group" aria-label="Mode du camembert">
+                <button class="seg-btn active" data-view="contrib">Contribution</button>
+                <button class="seg-btn" data-view="objectif">Objectif</button>
+                <button class="seg-btn" data-view="coef">Poids</button>
+              </div>
+            </div>
+            <div class="tb-group">
+              <span class="tb-label">Colorer par</span>
+              <div class="seg" id="colorBySeg" role="group" aria-label="Coloration">
+                <button class="seg-btn active" data-color="matiere">Matière</button>
+                <button class="seg-btn" data-color="domaine">Domaine</button>
+                <button class="seg-btn" data-color="type">Type</button>
+              </div>
+            </div>
+            <button id="focusLockedBtn" class="btn ghost" type="button" aria-pressed="false">🔒 Focus figées</button>
+            <label class="tb-group target-wrap" id="pieTargetWrap">🎯
+              <select class="target-select" id="targetSelectPie" aria-label="Mention visée"></select>
+            </label>
           </div>
-        </div>
-        <div class="donut-wrap">
-          <div class="donut" id="donut"><!-- SVG injecté --></div>
-          <ul class="legend" id="legend"></ul>
-        </div>
-        <p class="tooltip" id="donutTip" hidden></p>
+          <div class="donut-wrap">
+            <div class="donut" id="donut"><!-- SVG injecté --></div>
+            <ul class="legend" id="legend"></ul>
+          </div>
+          <p class="tooltip" id="donutTip" hidden></p>
+          <p class="hint">Survole une part pour le détail. Les notes <strong>figées</strong> sont hachurées 🔒.</p>
+        </section>
+
+        <!-- ---- Onglet Domaines (radar) ---- -->
+        <section class="tab-panel" data-panel="radar" role="tabpanel">
+          <h2 class="card-title">Moyenne par domaine</h2>
+          <div class="radar" id="radar"><!-- SVG injecté --></div>
+          <p class="hint">Polygone plein = tes moyennes par domaine · contour pointillé = ton objectif (mention visée, modifiable dans l'onglet 🎯 Objectif).</p>
+        </section>
+
+        <!-- ---- Onglet Détail (barres) ---- -->
+        <section class="tab-panel" data-panel="bars" role="tabpanel">
+          <div class="card-head">
+            <h2 class="card-title">Détail par matière</h2>
+            <div class="seg" id="barsMetricSeg" role="group" aria-label="Mesure">
+              <button class="seg-btn active" data-metric="contrib">Contribution</button>
+              <button class="seg-btn" data-metric="note">Note /20</button>
+            </div>
+          </div>
+          <ol class="bars" id="barsBySubject"></ol>
+          <p class="hint">« Contribution » = points apportés à la moyenne (note × coef / 104). Couleurs selon le mode « colorer par » du camembert.</p>
+        </section>
+
+        <!-- ---- Onglet Objectif ---- -->
+        <section class="tab-panel" data-panel="objectif" role="tabpanel">
+          <label class="obj-row">🎯 Je vise&nbsp;:
+            <select class="target-select" id="targetSelectObj" aria-label="Mention visée"></select>
+          </label>
+          <div class="comparison" id="comparison"><!-- SVG injecté --></div>
+          <p class="cmp-caption" id="comparisonCaption"></p>
+
+          <h2 class="card-title">Poids et niveau par bloc</h2>
+          <div class="blocks-stacked" id="blocksStacked"></div>
+          <p class="hint">La largeur de chaque segment est proportionnelle à son <strong>coefficient</strong> ; la couleur reflète la moyenne du bloc.</p>
+
+          <h2 class="card-title">Échelle des mentions</h2>
+          <div class="scale" id="scale"><!-- SVG injecté --></div>
+        </section>
       </div>
     </section>
 
@@ -74,18 +127,10 @@
         <p class="hint">Les scénarios n'affectent que les notes <em>variables</em> (cadenas ouvert 🔓). Verrouille 🔒 une note pour la figer.</p>
       </div>
 
-      <!-- Objectif mention -->
       <div class="card objectif">
         <h2 class="card-title">🎯 Objectif</h2>
-        <label class="obj-row">
-          Je vise&nbsp;:
-          <select id="targetSelect">
-            <option value="10">Admission (10)</option>
-            <option value="12">Mention Assez bien (12)</option>
-            <option value="14" selected>Mention Bien (14)</option>
-            <option value="16">Mention Très bien (16)</option>
-            <option value="18">TB + félicitations (18)</option>
-          </select>
+        <label class="obj-row">Je vise&nbsp;:
+          <select class="target-select" id="targetSelect" aria-label="Mention visée"></select>
         </label>
         <p class="obj-result" id="objResult"></p>
       </div>
@@ -93,11 +138,10 @@
       <!-- Sliders, injectés par groupe -->
       <div id="groups"></div>
 
-      <!-- Levier -->
       <div class="card leverage">
-        <h2 class="card-title">💪 Où mettre l'énergie&nbsp;?</h2>
-        <p class="hint">Effet d'<strong>+1 point</strong> sur la moyenne finale, par matière (notes variables d'abord).</p>
+        <h2 class="card-title">💪 Tes plus gros leviers</h2>
         <ol class="leverage-list" id="leverageList"></ol>
+        <p class="hint">Matières variables au plus fort coefficient : effet d'<strong>+1 pt</strong> sur la moyenne.</p>
       </div>
 
       <div class="card actions-card">
@@ -118,6 +162,10 @@
         plus les options. La moyenne affichée est la moyenne pondérée
         <code>Σ(note × coef) / <span id="totalCoefTxt">104</span></code>.
         Spécificité 2027 : épreuve <strong>anticipée de maths</strong> (coef 2) en 1re et <strong>Grand oral coef 8</strong>.
+      </p>
+      <p>
+        <strong>Options</strong> (maths expertes, musique) : coef 2 chacune, comptées en moyenne — une note &lt; 10
+        fait légèrement baisser la moyenne. Ce n'est <strong>plus</strong> l'ancien système de bonus (points au‑dessus de 10, avant 2020).
       </p>
       <p class="disclaimer">
         ⚠️ Outil de simulation indicatif. Les règles exactes du jury (arrondis, oral de rattrapage du 2ᵉ groupe,
