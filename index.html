@@ -23,7 +23,6 @@
   <main class="wrap layout">
     <!-- ================= COLONNE VISUALISATION ================= -->
     <section class="viz" aria-label="Visualisations">
-      <!-- En-tête fixe : moyenne + mention -->
       <div class="viz-head">
         <div class="gauge" id="gauge"><!-- SVG injecté --></div>
         <div class="gauge-meta">
@@ -33,108 +32,49 @@
         </div>
       </div>
 
-      <!-- Onglets -->
-      <div class="tabs" role="tablist" aria-label="Vues">
+      <!-- Choix de représentation -->
+      <div class="tabs" role="tablist" aria-label="Représentation">
         <button class="tab-btn active" data-tab="pie" role="tab" aria-selected="true">🥧 Camembert</button>
+        <button class="tab-btn" data-tab="bars" role="tab" aria-selected="false">📊 Barres</button>
+        <button class="tab-btn" data-tab="treemap" role="tab" aria-selected="false">🔲 Treemap</button>
         <button class="tab-btn" data-tab="radar" role="tab" aria-selected="false">🕸️ Domaines</button>
-        <button class="tab-btn" data-tab="bars" role="tab" aria-selected="false">📊 Détail</button>
-        <button class="tab-btn" data-tab="objectif" role="tab" aria-selected="false">🎯 Objectif</button>
       </div>
 
       <div class="tab-content">
-        <!-- ---- Onglet Camembert ---- -->
-        <section class="tab-panel active" data-panel="pie" role="tabpanel">
-          <div class="toolbar">
-            <div class="tb-group">
-              <span class="tb-label">100 % =</span>
-              <div class="seg" id="donutViewSeg" role="group" aria-label="Mode du camembert">
-                <button class="seg-btn active" data-view="contrib">Contribution</button>
-                <button class="seg-btn" data-view="objectif">Objectif</button>
-                <button class="seg-btn" data-view="coef">Poids</button>
-              </div>
-            </div>
-            <div class="tb-group">
-              <span class="tb-label">Colorer par</span>
-              <div class="seg" id="colorBySeg" role="group" aria-label="Coloration">
-                <button class="seg-btn active" data-color="matiere">Matière</button>
-                <button class="seg-btn" data-color="domaine">Domaine</button>
-                <button class="seg-btn" data-color="type">Type</button>
-              </div>
-            </div>
-            <button id="focusLockedBtn" class="btn ghost" type="button" aria-pressed="false">🔒 Focus figées</button>
-            <label class="tb-group target-wrap" id="pieTargetWrap">🎯
-              <select class="target-select" id="targetSelectPie" aria-label="Mention visée"></select>
-            </label>
-          </div>
-          <div class="donut-wrap">
-            <div class="donut" id="donut"><!-- SVG injecté --></div>
-            <ul class="legend" id="legend"></ul>
-          </div>
-          <p class="tooltip" id="donutTip" hidden></p>
-          <p class="hint">Survole une part pour le détail. Les notes <strong>figées</strong> sont hachurées 🔒.</p>
-        </section>
-
-        <!-- ---- Onglet Domaines (radar) ---- -->
-        <section class="tab-panel" data-panel="radar" role="tabpanel">
-          <h2 class="card-title">Moyenne par domaine</h2>
-          <div class="radar" id="radar"><!-- SVG injecté --></div>
-          <p class="hint">Polygone plein = tes moyennes par domaine · contour pointillé = ton objectif (mention visée, modifiable dans l'onglet 🎯 Objectif).</p>
-        </section>
-
-        <!-- ---- Onglet Détail (barres) ---- -->
-        <section class="tab-panel" data-panel="bars" role="tabpanel">
-          <div class="card-head">
-            <h2 class="card-title">Détail par matière</h2>
-            <div class="seg" id="barsMetricSeg" role="group" aria-label="Mesure">
-              <button class="seg-btn active" data-metric="contrib">Contribution</button>
-              <button class="seg-btn" data-metric="note">Note /20</button>
+        <!-- Barre d'outils partagée -->
+        <div class="toolbar">
+          <button id="focusLockedBtn" class="btn ghost" type="button" aria-pressed="false">🔒 Focus figées</button>
+          <div class="tb-group" data-tb="view">
+            <span class="tb-label">Mesure</span>
+            <div class="seg" id="donutViewSeg" role="group" aria-label="Mesure">
+              <button class="seg-btn active" data-view="contrib">Contribution</button>
+              <button class="seg-btn" data-view="coef">Coeffs</button>
             </div>
           </div>
-          <ol class="bars" id="barsBySubject"></ol>
-          <p class="hint">« Contribution » = points apportés à la moyenne (note × coef / 104). Couleurs selon le mode « colorer par » du camembert.</p>
-        </section>
-
-        <!-- ---- Onglet Objectif ---- -->
-        <section class="tab-panel" data-panel="objectif" role="tabpanel">
-          <label class="obj-row">🎯 Je vise&nbsp;:
-            <select class="target-select" id="targetSelectObj" aria-label="Mention visée"></select>
+          <div class="tb-group" data-tb="color">
+            <span class="tb-label">Colorer par</span>
+            <div class="seg" id="colorBySeg" role="group" aria-label="Coloration">
+              <button class="seg-btn active" data-color="matiere">Matière</button>
+              <button class="seg-btn" data-color="domaine">Domaine</button>
+              <button class="seg-btn" data-color="type">Type</button>
+            </div>
+          </div>
+          <label class="tb-group target-wrap" id="pieTargetWrap">🎯
+            <select class="target-select" id="targetSelectPie" aria-label="Mention visée"></select>
           </label>
-          <div class="comparison" id="comparison"><!-- SVG injecté --></div>
-          <p class="cmp-caption" id="comparisonCaption"></p>
+        </div>
 
-          <h2 class="card-title">Poids et niveau par bloc</h2>
-          <div class="blocks-stacked" id="blocksStacked"></div>
-          <p class="hint">La largeur de chaque segment est proportionnelle à son <strong>coefficient</strong> ; la couleur reflète la moyenne du bloc.</p>
-
-          <h2 class="card-title">Échelle des mentions</h2>
-          <div class="scale" id="scale"><!-- SVG injecté --></div>
-        </section>
+        <div class="chart-row">
+          <div class="chart" id="chart"><!-- représentation active injectée --></div>
+          <ul class="legend" id="legend"></ul>
+        </div>
+        <p class="tooltip" id="chartTip" hidden></p>
+        <p class="hint" id="chartHint"></p>
       </div>
     </section>
 
     <!-- ================= COLONNE PILOTAGE ================= -->
     <section class="controls" aria-label="Réglage des notes">
-      <div class="card scenarios">
-        <h2 class="card-title">Scénarios rapides</h2>
-        <div class="btn-row">
-          <button class="btn" data-scenario="reset">↺ Réinitialiser (10)</button>
-          <button class="btn" data-scenario="10">Tout à 10</button>
-          <button class="btn" data-scenario="12">Tout à 12</button>
-          <button class="btn" data-scenario="14">Tout à 14</button>
-          <button class="btn" data-scenario="opt">Optimiste (+2)</button>
-          <button class="btn" data-scenario="pess">Pessimiste (−2)</button>
-        </div>
-        <p class="hint">Les scénarios n'affectent que les notes <em>variables</em> (cadenas ouvert 🔓). Verrouille 🔒 une note pour la figer.</p>
-      </div>
-
-      <div class="card objectif">
-        <h2 class="card-title">🎯 Objectif</h2>
-        <label class="obj-row">Je vise&nbsp;:
-          <select class="target-select" id="targetSelect" aria-label="Mention visée"></select>
-        </label>
-        <p class="obj-result" id="objResult"></p>
-      </div>
-
       <!-- Sliders, injectés par groupe -->
       <div id="groups"></div>
 

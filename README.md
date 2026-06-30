@@ -15,28 +15,27 @@ moyenne, la mention, les marges et la répartition par coefficients.
 
 Pilotage (panneau de droite) :
 - **Curseurs (0–20, pas de 0,25)** ou champ numérique pour chaque matière.
-- **Cadenas 🔒 / 🔓** : fige une note « sûre » (déjà obtenue) ou la laisse variable. Les scénarios et
-  le calcul d'objectif ne touchent **jamais** aux notes figées.
-- **Scénarios rapides**, **objectif de mention**, **top 3 des leviers**, **lien partageable** et
-  **impression/PDF**.
+- **Cadenas 🔒 / 🔓** : fige une note « sûre » (déjà obtenue) ou la laisse variable.
+- **Top 3 des leviers**, **lien partageable** et **impression/PDF**.
 - L'état (notes, cadenas, libellés, réglages) est **sauvegardé automatiquement** (localStorage) et peut
   être partagé via un lien (`#s=…`).
 
 ## Visualisations (panneau de gauche, défilement indépendant)
 
-Un en-tête fixe (moyenne /20 + mention) surmonte **4 onglets** :
+Un en-tête fixe (moyenne /20 + mention) surmonte un **choix de représentation** des mêmes données :
 
-- **🥧 Camembert** (vue principale). Trois réglages :
-  - *100 % =* **Contribution** (note × coef, par défaut) · **Objectif** (le cercle plein = la mention
-    visée ; il reste un arc gris « à gagner » tant que l'objectif n'est pas atteint) · **Poids** (coef).
-  - *Colorer par* **Matière** · **Domaine** · **Type d'épreuve** (contrôle continu / écrit / oral).
-  - *🔒 Focus figées* : met en avant les notes verrouillées (le reste est estompé). Les notes figées
-    sont **hachurées** quel que soit le mode. Les grandes parts affichent leur nom directement.
-- **🕸️ Domaines** : radar des moyennes par domaine, avec le contour de l'objectif en pointillés.
-- **📊 Détail** : barres triées par matière (contribution en points, ou note /20).
-- **🎯 Objectif** : **barre de comparaison** (référence = seuil de la mention visée ; tes points
-  empilés, figées en couleur vive + variables estompées — si la pile dépasse la référence, c'est
-  gagné), **poids par bloc** (largeur ∝ coefficient) et **échelle des mentions**.
+- **🥧 Camembert** (par défaut) · **📊 Barres** · **🔲 Treemap** · **🕸️ Domaines** (radar par domaine).
+
+Une **barre d'outils partagée** pilote ces vues :
+- **🔒 Focus figées** : met en avant les notes verrouillées (le reste est estompé). Les notes figées
+  sont de toute façon **hachurées** dans toutes les vues.
+- *Mesure* : **Contribution** (note × coef ; sur le camembert, le cercle plein = la **mention visée**,
+  avec un arc gris « à gagner » tant qu'elle n'est pas atteinte) ou **Coeffs** (poids).
+- *Colorer par* : **Matière** · **Domaine** · **Type d'épreuve** (contrôle continu / écrit / oral).
+- *🎯 Mention visée* (pour les vues qui s'y rapportent).
+
+**Clique** sur une matière (part, barre, case ou — survol) pour **épingler 📌** son détail sous le
+graphique. Les grandes parts/cases affichent leur nom directement.
 
 ## Comment la note est calculée
 
