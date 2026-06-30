@@ -256,7 +256,6 @@ function update() {
     r.lockBtn.classList.toggle("locked", locked);
     r.lockBtn.setAttribute("aria-pressed", String(locked));
   }
-  renderMention(m);
   renderLeverage();
   renderActiveTab(m);
 }
@@ -268,18 +267,6 @@ function renderActiveTab(m) {
     case "radar":   renderRadar(m); break;
     default:        renderDonut(m);
   }
-}
-
-/* -------------------- En-tête : jauge + mention -------------------- */
-
-function renderMention(m) {
-  const men = mentionFor(m);
-  const badge = document.getElementById("mentionBadge");
-  badge.textContent = men.label; badge.style.background = men.color;
-  document.getElementById("mentionStatus").textContent = men.status;
-  const next = nextStep(m), el = document.getElementById("mentionNext");
-  if (!next) el.textContent = "Tu es tout en haut de l'échelle. 🎉";
-  else { const gap = next.at - m; el.textContent = `Il te manque ${fmt(gap)} pt${gap >= 2 ? "s" : ""} pour ${next.label} (${next.at}/20).`; }
 }
 
 /* -------------------- Détail épinglable (tooltip partagé) -------------------- */
@@ -399,19 +386,33 @@ function sliceLabel(cx, cy, rO, rI, mid, text) {
 /* -------------------- Représentation : Barres -------------------- */
 
 function renderBars(m) {
-  const view = state.view;
+  const view = state.view, contrib = view === "contrib";
   // Colonne empilée verticale : figées en bas (regroupées), puis le reste.
   const items = chartData().filter((d) => d.value > 0)
     .sort((a, b) => (a.locked === b.locked ? (a.oi - b.oi || b.value - a.value) : (a.locked ? -1 : 1)));
   const sum = items.reduce((a, d) => a + d.value, 0) || 1;
-  const total = view === "contrib" ? Math.max(sum, state.target * TOTAL_COEF) : sum;
+  // En mode Contribution, la pleine hauteur = note 20 (échelle /20) ; en Coeffs, on remplit la colonne.
+  const scaleMax = contrib ? 20 * TOTAL_COEF : sum;
 
-  const W = 200, H = 380, colX = 40, colW = 120, top = 14, bottom = H - 14, colH = bottom - top;
+  const W = 240, H = 384, colX = 46, colW = 150, top = 18, bottom = H - 22, colH = bottom - top;
+  const yOf = (n) => bottom - (n / 20) * colH;
   let svg = `<svg class="stacked" viewBox="0 0 ${W} ${H}" role="img" aria-label="Barres empilées par matière">`;
   svg += `<defs><pattern id="hatchB" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="rgba(255,255,255,.6)" stroke-width="2.6"/></pattern></defs>`;
+
+  // Échelle verticale graduée /20 (mode Contribution)
+  if (contrib) {
+    svg += `<text x="12" y="${(top - 7).toFixed(1)}" font-size="8.5" fill="#5b627e">note /20</text>`;
+    for (const n of [0, 5, 10, 15, 20]) {
+      const yy = yOf(n);
+      svg += `<line x1="${colX}" y1="${yy.toFixed(1)}" x2="${colX + colW}" y2="${yy.toFixed(1)}" stroke="#eef0fb"/>`;
+      svg += `<text x="${colX - 7}" y="${yy.toFixed(1)}" text-anchor="end" dominant-baseline="central" font-size="9" fill="#5b627e">${n}</text>`;
+    }
+  }
+
+  // Segments empilés depuis le bas
   let y = bottom;
   for (const d of items) {
-    const h = (d.value / total) * colH, yTop = y - h;
+    const h = (d.value / scaleMax) * colH, yTop = y - h;
     const dim = state.focusLocked && !d.locked ? ' opacity="0.16"' : "";
     const pin = pinnedId === d.id ? ' stroke="#1c2138" stroke-width="2.5"' : "";
     svg += `<g data-id="${d.id}" tabindex="0">`;
@@ -421,15 +422,29 @@ function renderBars(m) {
     svg += `</g>`;
     y = yTop;
   }
-  if (view === "contrib" && sum < total && y - top > 1) {
-    svg += `<rect x="${colX}" y="${top}" width="${colW}" height="${(y - top).toFixed(1)}" fill="#e6e9f2"/>`;
-    if (y - top > 14) svg += `<text x="${colX + colW / 2}" y="${(top + (y - top) / 2).toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="8.5" fill="#5b627e">à gagner</text>`;
-  }
+  const stackTop = y;
   svg += `<rect x="${colX}" y="${top}" width="${colW}" height="${colH}" fill="none" stroke="#e6e9f2"/>`;
+
+  if (contrib) {
+    const yTarget = yOf(state.target);
+    // Zone « à gagner » entre la moyenne (haut de pile) et l'objectif
+    if (stackTop - yTarget > 1) {
+      svg += `<rect x="${colX}" y="${yTarget.toFixed(1)}" width="${colW}" height="${(stackTop - yTarget).toFixed(1)}" fill="#e6e9f2" opacity="0.65"/>`;
+      if (stackTop - yTarget > 13) svg += `<text x="${colX + colW / 2}" y="${((stackTop + yTarget) / 2).toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="8.5" fill="#5b627e">à gagner</text>`;
+    }
+    // Barre horizontale = valeur à atteindre (mention visée)
+    svg += `<line x1="${colX - 4}" y1="${yTarget.toFixed(1)}" x2="${colX + colW + 4}" y2="${yTarget.toFixed(1)}" stroke="#475569" stroke-width="1.6" stroke-dasharray="5 4"/>`;
+    svg += `<text x="${colX + colW + 6}" y="${yTarget.toFixed(1)}" dominant-baseline="central" font-size="8.5" font-weight="700" fill="#475569">obj ${state.target}</text>`;
+    // Trait + valeur de la moyenne actuelle (haut de pile)
+    svg += `<line x1="${colX}" y1="${stackTop.toFixed(1)}" x2="${colX + colW}" y2="${stackTop.toFixed(1)}" stroke="${mentionFor(m).color}" stroke-width="1.6"/>`;
+    svg += `<text x="${colX + colW + 6}" y="${stackTop.toFixed(1)}" dominant-baseline="central" font-size="9" font-weight="700" fill="${mentionFor(m).color}">${fmt(m)}</text>`;
+  }
   svg += `</svg>`;
   document.getElementById("chart").innerHTML = svg;
   buildLegend();
-  setHint("Colonne empilée — chaque segment = une matière (hauteur ∝ " + (view === "coef" ? "coefficient" : "contribution") + "). Clique pour épingler 📌. Les figées sont regroupées en bas.");
+  setHint(contrib
+    ? "Colonne empilée sur une échelle /20 : la pile monte jusqu'à ta moyenne ; la ligne pointillée = la mention visée. Clique pour épingler 📌."
+    : "Colonne empilée par coefficient (figées regroupées en bas). Clique pour épingler 📌.");
   wireChartInteractions();
 }
 

@@ -79,16 +79,6 @@ body {
 .card-head .card-title { margin: 0; }
 .hint { color: var(--ink-soft); font-size: 0.8rem; margin: 10px 0 0; }
 
-/* ---------------- En-tête viz : mention ---------------- */
-.viz-head {
-  flex: none;
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 12px 16px;
-}
-.mention-badge { display: inline-block; padding: 6px 13px; border-radius: 999px; color: #fff; font-weight: 700; font-size: 1.02rem; }
-.mention-status { margin: 9px 0 4px; font-weight: 600; }
-.mention-next { margin: 0; color: var(--ink-soft); font-size: 0.86rem; }
-
 /* ---------------- Onglets ---------------- */
 .tabs { flex: none; display: flex; gap: 6px; }
 .tab-btn {
@@ -142,7 +132,7 @@ body {
 @media (max-width: 560px) { .chart-row { grid-template-columns: 1fr; } }
 
 /* ---------------- Barres empilées (colonne verticale) ---------------- */
-.chart svg.stacked { max-width: 240px; }
+.chart svg.stacked { max-width: 300px; }
 
 /* ---------------- Boutons ---------------- */
 .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
