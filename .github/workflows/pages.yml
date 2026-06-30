@@ -2,7 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main", "claude/bac-grade-dashboard-036h8d"]
+    branches: ["main"]   # uniquement la branche par défaut : le déploiement Pages
+                          # n'est autorisé que depuis main (sinon le job échoue en 2 s).
   workflow_dispatch:
 
 permissions:
