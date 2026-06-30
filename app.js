@@ -256,7 +256,6 @@ function update() {
     r.lockBtn.classList.toggle("locked", locked);
     r.lockBtn.setAttribute("aria-pressed", String(locked));
   }
-  renderGauge(m);
   renderMention(m);
   renderLeverage();
   renderActiveTab(m);
@@ -273,19 +272,6 @@ function renderActiveTab(m) {
 
 /* -------------------- En-tête : jauge + mention -------------------- */
 
-function renderGauge(m) {
-  const col = mentionFor(m).color;
-  const r = 72, c = 2 * Math.PI * r, prog = Math.max(0, Math.min(1, m / 20)), off = c * (1 - prog);
-  document.getElementById("gauge").innerHTML =
-    `<svg viewBox="0 0 180 180" role="img" aria-label="Moyenne ${fmt(m)} sur 20">
-       <circle cx="90" cy="90" r="${r}" fill="none" stroke="#eef0fb" stroke-width="16"/>
-       <circle cx="90" cy="90" r="${r}" fill="none" stroke="${col}" stroke-width="16" stroke-linecap="round"
-               stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 90 90)"
-               style="transition:stroke-dashoffset .4s, stroke .3s"/>
-       <text x="90" y="86" text-anchor="middle" font-size="40" font-weight="800" fill="${col}">${fmt(m)}</text>
-       <text x="90" y="108" text-anchor="middle" font-size="13" fill="#5b627e">/ 20</text>
-     </svg>`;
-}
 function renderMention(m) {
   const men = mentionFor(m);
   const badge = document.getElementById("mentionBadge");
@@ -363,7 +349,9 @@ function buildLegend() {
 
 function renderDonut(m) {
   const view = state.view;
-  let slices = chartData().filter((d) => d.value > 0).sort((a, b) => a.oi - b.oi || b.value - a.value);
+  // Figées d'abord (regroupées au début), puis le reste — ordonné par famille/valeur.
+  let slices = chartData().filter((d) => d.value > 0)
+    .sort((a, b) => (a.locked === b.locked ? (a.oi - b.oi || b.value - a.value) : (a.locked ? -1 : 1)));
   const sum = slices.reduce((a, d) => a + d.value, 0) || 1;
   const total = view === "contrib" ? Math.max(sum, state.target * TOTAL_COEF) : sum;
 
@@ -399,7 +387,7 @@ function renderDonut(m) {
   svg += `</svg>`;
   document.getElementById("chart").innerHTML = svg;
   buildLegend();
-  setHint("Survole ou clique une part pour épingler son détail. Les notes figées sont hachurées 🔒.");
+  setHint("Survole ou clique une part pour épingler 📌 son détail. Les notes figées (hachurées 🔒) sont regroupées au début.");
   wireChartInteractions();
 }
 
@@ -412,22 +400,36 @@ function sliceLabel(cx, cy, rO, rI, mid, text) {
 
 function renderBars(m) {
   const view = state.view;
-  const items = chartData().sort((a, b) => b.value - a.value);
-  const max = view === "coef" ? Math.max(...items.map((d) => d.coef)) : Math.max(1, ...items.map((d) => d.value));
-  let html = '<ol class="bars">';
+  // Colonne empilée verticale : figées en bas (regroupées), puis le reste.
+  const items = chartData().filter((d) => d.value > 0)
+    .sort((a, b) => (a.locked === b.locked ? (a.oi - b.oi || b.value - a.value) : (a.locked ? -1 : 1)));
+  const sum = items.reduce((a, d) => a + d.value, 0) || 1;
+  const total = view === "contrib" ? Math.max(sum, state.target * TOTAL_COEF) : sum;
+
+  const W = 200, H = 380, colX = 40, colW = 120, top = 14, bottom = H - 14, colH = bottom - top;
+  let svg = `<svg class="stacked" viewBox="0 0 ${W} ${H}" role="img" aria-label="Barres empilées par matière">`;
+  svg += `<defs><pattern id="hatchB" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="rgba(255,255,255,.6)" stroke-width="2.6"/></pattern></defs>`;
+  let y = bottom;
   for (const d of items) {
-    const yt = yearTag(d.id);
-    const right = view === "coef" ? `coef ${d.coef}` : `${fmt(d.value / TOTAL_COEF)} pts`;
-    const dim = state.focusLocked && !d.locked ? ' style="opacity:.38"' : "";
-    html += `<li class="bar-row${pinnedId === d.id ? " pinned" : ""}" data-id="${d.id}" tabindex="0"${dim}>` +
-      `<span class="b-name">${escapeHtml(getLabel(d.s))}${yt ? ` <span class="lv-when">${yt}</span>` : ""}${d.locked ? " 🔒" : ""}</span>` +
-      `<span class="b-track"><span class="b-fill${d.locked ? " locked" : ""}" style="width:${(d.value / max * 100).toFixed(1)}%;background:${d.color}"></span></span>` +
-      `<span class="b-val">${right}</span></li>`;
+    const h = (d.value / total) * colH, yTop = y - h;
+    const dim = state.focusLocked && !d.locked ? ' opacity="0.16"' : "";
+    const pin = pinnedId === d.id ? ' stroke="#1c2138" stroke-width="2.5"' : "";
+    svg += `<g data-id="${d.id}" tabindex="0">`;
+    svg += `<rect x="${colX}" y="${yTop.toFixed(1)}" width="${colW}" height="${h.toFixed(1)}" fill="${d.color}"${dim}${pin}/>`;
+    if (d.locked) svg += `<rect x="${colX}" y="${yTop.toFixed(1)}" width="${colW}" height="${h.toFixed(1)}" fill="url(#hatchB)"${dim} pointer-events="none"/>`;
+    if (h >= 16) svg += `<text x="${colX + colW / 2}" y="${(yTop + h / 2).toFixed(1)}" text-anchor="middle" dominant-baseline="central" class="slice-label">${escapeHtml(shortLabel(getLabel(d.s)))}</text>`;
+    svg += `</g>`;
+    y = yTop;
   }
-  html += "</ol>";
-  document.getElementById("chart").innerHTML = html;
-  clearLegend();
-  setHint("Clique une barre pour épingler son détail. Longueur ∝ " + (view === "coef" ? "coefficient." : "contribution (note × coef)."));
+  if (view === "contrib" && sum < total && y - top > 1) {
+    svg += `<rect x="${colX}" y="${top}" width="${colW}" height="${(y - top).toFixed(1)}" fill="#e6e9f2"/>`;
+    if (y - top > 14) svg += `<text x="${colX + colW / 2}" y="${(top + (y - top) / 2).toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="8.5" fill="#5b627e">à gagner</text>`;
+  }
+  svg += `<rect x="${colX}" y="${top}" width="${colW}" height="${colH}" fill="none" stroke="#e6e9f2"/>`;
+  svg += `</svg>`;
+  document.getElementById("chart").innerHTML = svg;
+  buildLegend();
+  setHint("Colonne empilée — chaque segment = une matière (hauteur ∝ " + (view === "coef" ? "coefficient" : "contribution") + "). Clique pour épingler 📌. Les figées sont regroupées en bas.");
   wireChartInteractions();
 }
 
@@ -439,7 +441,8 @@ function treemapLayout(items, x, y, w, h, out) {
   const total = items.reduce((a, b) => a + b.value, 0);
   let i = 0, acc = 0;
   while (i < items.length - 1 && acc + items[i].value < total / 2) { acc += items[i].value; i++; }
-  const a = items.slice(0, i + 1), b = items.slice(i + 1);
+  const cut = Math.min(i, items.length - 2);   // garantit deux groupes non vides (sinon récursion infinie)
+  const a = items.slice(0, cut + 1), b = items.slice(cut + 1);
   const r = a.reduce((s, d) => s + d.value, 0) / total;
   if (w >= h) { const aw = w * r; treemapLayout(a, x, y, aw, h, out); treemapLayout(b, x + aw, y, w - aw, h, out); }
   else { const ah = h * r; treemapLayout(a, x, y, w, ah, out); treemapLayout(b, x, y + ah, w, h - ah, out); }
@@ -447,7 +450,8 @@ function treemapLayout(items, x, y, w, h, out) {
 
 function renderTreemap(m) {
   const view = state.view;
-  const items = chartData().filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
+  const items = chartData().filter((d) => d.value > 0)
+    .sort((a, b) => (a.locked === b.locked ? b.value - a.value : (a.locked ? -1 : 1)));
   const W = 360, H = 232, gap = 2, cells = [];
   treemapLayout(items, 0, 0, W, H, cells);
   let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Treemap par matière">`;
