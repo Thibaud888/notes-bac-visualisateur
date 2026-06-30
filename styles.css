@@ -119,17 +119,22 @@ body {
 .seg-btn { border: 0; background: transparent; cursor: pointer; padding: 5px 11px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; color: var(--ink-soft); }
 .seg-btn.active { background: var(--accent); color: #fff; }
 .target-wrap { font-size: 0.8rem; color: var(--ink-soft); }
-.target-wrap select, .obj-row select { padding: 6px 9px; border-radius: 9px; border: 1px solid var(--line); font-size: 0.88rem; }
+.target-wrap select { padding: 6px 9px; border-radius: 9px; border: 1px solid var(--line); font-size: 0.88rem; }
 
-/* ---------------- Camembert ---------------- */
-.donut-wrap { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(150px, 210px); gap: 16px; align-items: center; }
-.donut { max-width: 420px; margin-inline: auto; width: 100%; }
-.donut svg { width: 100%; height: auto; display: block; }
-.donut path[data-id] { cursor: pointer; transition: opacity .15s; }
-.donut path[data-id]:hover { opacity: 0.82; }
+/* ---------------- Zone graphique (camembert / barres / treemap / radar) ---------------- */
+.chart-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 210px); gap: 16px; align-items: center; }
+.chart-row:has(#legend:empty) { grid-template-columns: 1fr; }
+.chart { min-width: 0; }
+.chart svg { width: 100%; height: auto; display: block; max-width: 440px; margin-inline: auto; }
+.chart .bars { width: 100%; }
+.chart [data-id] { cursor: pointer; }
+.chart path[data-id]:hover, .chart g[data-id]:hover { opacity: 0.85; }
 .slice-label { fill: #fff; font-size: 8px; font-weight: 700; paint-order: stroke; stroke: rgba(0,0,0,.28); stroke-width: 2.2px; pointer-events: none; }
+.tm-label { fill: #fff; font-size: 9px; font-weight: 700; paint-order: stroke; stroke: rgba(0,0,0,.30); stroke-width: 2px; pointer-events: none; }
+.tm-sub { fill: rgba(255,255,255,.92); font-size: 8px; paint-order: stroke; stroke: rgba(0,0,0,.28); stroke-width: 1.8px; pointer-events: none; }
 
-.legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; align-content: start; max-height: 360px; overflow: auto; }
+.legend:empty { display: none; }
 .legend li { display: flex; align-items: center; gap: 8px; font-size: 0.83rem; }
 .legend .dot { width: 11px; height: 11px; border-radius: 3px; flex: none; }
 .legend .lg-coef { margin-left: auto; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
@@ -137,12 +142,9 @@ body {
 
 .tooltip { margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; background: var(--surface-soft); font-size: 0.84rem; border: 1px solid var(--line); }
 
-@media (max-width: 560px) { .donut-wrap { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .chart-row { grid-template-columns: 1fr; } }
 
-/* ---------------- Radar ---------------- */
-.radar svg { width: 100%; height: auto; display: block; max-width: 420px; margin-inline: auto; }
-
-/* ---------------- Détail : barres par matière ---------------- */
+/* ---------------- Barres par matière ---------------- */
 .bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
 .bars li { display: grid; grid-template-columns: minmax(110px, 150px) 1fr auto; gap: 10px; align-items: center; font-size: 0.83rem; }
 .bars .b-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -153,27 +155,9 @@ body {
   background: repeating-linear-gradient(45deg, rgba(255,255,255,.55) 0 3px, transparent 3px 7px);
 }
 .bars .b-val { color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
-
-/* ---------------- Objectif : comparaison + blocs ---------------- */
-.comparison svg { width: 100%; height: auto; display: block; max-width: 360px; margin: 6px auto 0; }
-.cmp-caption { margin: 8px 0 18px; padding: 10px 12px; border-radius: 10px; background: var(--surface-soft); font-size: 0.88rem; }
-.cmp-caption.ok { background: #e9f9ef; }
-.cmp-caption.no { background: #fff1e9; }
-.cmp-key { display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; color: var(--ink-soft); font-size: 0.78rem; }
-.cmp-key .key { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
-.cmp-key .key.vivid { background: #6366f1; }
-.cmp-key .key.faded { background: #6366f1; opacity: .38; }
-
-.blocks-stacked { display: grid; gap: 10px; }
-.bs-bar { display: flex; width: 100%; height: 54px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }
-.bs-bar .seg2 { display: flex; align-items: center; justify-content: center; min-width: 0; color: #fff; font-size: 0.72rem; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,.25); overflow: hidden; white-space: nowrap; }
-.bs-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
-.bs-legend li { display: flex; align-items: center; gap: 8px; font-size: 0.83rem; }
-.bs-legend .dot { width: 11px; height: 11px; border-radius: 3px; flex: none; }
-.bs-legend .lg-coef { margin-left: auto; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-
-/* ---------------- Échelle des mentions ---------------- */
-.scale svg { width: 100%; height: 78px; display: block; }
+.bars li.bar-row { cursor: pointer; border-radius: 8px; padding: 3px 5px; transition: background .12s; }
+.bars li.bar-row:hover { background: var(--surface-soft); }
+.bars li.bar-row.pinned { background: #eef0fb; box-shadow: inset 0 0 0 1px var(--accent); }
 
 /* ---------------- Boutons ---------------- */
 .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -182,13 +166,6 @@ body {
 .btn:active { transform: translateY(0); }
 .btn.ghost { background: var(--surface-soft); }
 #focusLockedBtn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-/* ---------------- Objectif (texte) ---------------- */
-.obj-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.obj-result { margin: 12px 0 0; font-size: 0.92rem; padding: 10px 12px; border-radius: 10px; background: var(--surface-soft); }
-.obj-result.ok { background: #e9f9ef; }
-.obj-result.info { background: #eef0fb; }
-.obj-result.no { background: #fff1e9; }
 
 /* ---------------- Groupes de notes / sliders ---------------- */
 .group { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 14px 16px; }
