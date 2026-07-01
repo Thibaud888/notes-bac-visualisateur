@@ -24,13 +24,13 @@ const SUBJECTS = [
   { id: "svt",   label: "SVT (spé abandonnée)",          group: "cc_premiere",  when: "Moyenne 1re",           coef: 8,  color: "#0ea5e9", domain: "sci",     evalType: "continu" },
   { id: "hg_1",  label: "Histoire-Géographie",           group: "cc_premiere",  when: "Moyenne 1re",           coef: 3,  color: "#14b8a6", domain: "hum",     evalType: "continu" },
   { id: "lva_1", label: "LVA (Anglais)",                 group: "cc_premiere",  when: "Moyenne 1re",           coef: 3,  color: "#2dd4bf", domain: "lang",    evalType: "continu" },
-  { id: "lvb_1", label: "LVB (Espagnol)",                group: "cc_premiere",  when: "Moyenne 1re",           coef: 3,  color: "#34d399", domain: "lang",    evalType: "continu" },
+  { id: "lvb_1", label: "LVB (Italien)",                 group: "cc_premiere",  when: "Moyenne 1re",           coef: 3,  color: "#34d399", domain: "lang",    evalType: "continu" },
   { id: "sci_1", label: "Enseignement scientifique",     group: "cc_premiere",  when: "Moyenne 1re",           coef: 3,  color: "#10b981", domain: "sci",     evalType: "continu" },
   { id: "emc_1", label: "EMC",                           group: "cc_premiere",  when: "Moyenne 1re",           coef: 1,  color: "#6ee7b7", domain: "hum",     evalType: "continu" },
 
   { id: "hg_2",  label: "Histoire-Géographie",           group: "cc_terminale", when: "Moyenne Tle",           coef: 3,  color: "#f59e0b", domain: "hum",     evalType: "continu" },
   { id: "lva_2", label: "LVA (Anglais)",                 group: "cc_terminale", when: "Moyenne Tle",           coef: 3,  color: "#fbbf24", domain: "lang",    evalType: "continu" },
-  { id: "lvb_2", label: "LVB (Espagnol)",                group: "cc_terminale", when: "Moyenne Tle",           coef: 3,  color: "#f97316", domain: "lang",    evalType: "continu" },
+  { id: "lvb_2", label: "LVB (Italien)",                 group: "cc_terminale", when: "Moyenne Tle",           coef: 3,  color: "#f97316", domain: "lang",    evalType: "continu" },
   { id: "sci_2", label: "Enseignement scientifique",     group: "cc_terminale", when: "Moyenne Tle",           coef: 3,  color: "#fb923c", domain: "sci",     evalType: "continu" },
   { id: "emc_2", label: "EMC",                           group: "cc_terminale", when: "Moyenne Tle",           coef: 1,  color: "#fcd34d", domain: "hum",     evalType: "continu" },
   { id: "eps",   label: "EPS",                           group: "cc_terminale", when: "CCF · Tle",             coef: 6,  color: "#eab308", domain: "arts",    evalType: "continu" },
@@ -90,15 +90,29 @@ const TOTAL_COEF = SUBJECTS.reduce((s, x) => s + x.coef, 0); // 104
 
 /* -------------------- État -------------------- */
 
+// Notes de départ proposées à un·e nouvel·le visiteur·se (valeurs réelles connues à ce jour).
+const DEFAULT_NOTES = {
+  fr_ecrit: 2, fr_oral: 0, maths_ant: 8,
+  spe_pc: 12, spe_maths: 12,
+  philo: 4, go: 4,
+  svt: 17, hg_1: 18.5, lva_1: 15, lvb_1: 15.5, sci_1: 19.5, emc_1: 18,
+  hg_2: 14, lva_2: 14, lvb_2: 14, sci_2: 14, emc_2: 14, eps: 10,
+  maths_exp: 5, musique: 15,
+};
+// Groupes figés par défaut : épreuves anticipées + contrôle continu de première (déjà passés).
+const DEFAULT_LOCKED_GROUPS = ["anticipe", "cc_premiere"];
+
 const DEFAULTS = {
-  notes: {}, locked: {}, labels: {},
+  notes: DEFAULT_NOTES,
+  locked: Object.fromEntries(SUBJECTS.filter((s) => DEFAULT_LOCKED_GROUPS.includes(s.group)).map((s) => [s.id, true])),
+  labels: {},
   tab: "pie",          // représentation : pie | bars | treemap | radar
   view: "contrib",     // mesure : contrib (note×coef, cible) | coef
   colorBy: "matiere",  // matiere | domaine | type
   focusLocked: false,
   target: 14,
 };
-let state = Object.assign({}, DEFAULTS);
+let state = { ...DEFAULTS, notes: { ...DEFAULTS.notes }, locked: { ...DEFAULTS.locked }, labels: { ...DEFAULTS.labels } };
 let pinnedId = null;   // matière épinglée (détail figé) — non persisté
 const refs = {};
 
@@ -342,8 +356,8 @@ function renderDonut(m) {
   const sum = slices.reduce((a, d) => a + d.value, 0) || 1;
   const total = view === "contrib" ? Math.max(sum, state.target * TOTAL_COEF) : sum;
 
-  const cx = 120, cy = 120, rO = 112, rI = 68;
-  let svg = `<svg viewBox="0 0 240 240" role="img" aria-label="Camembert pondéré">`;
+  const cx = 140, cy = 140, rO = 130, rI = 78, rMid = (rO + rI) / 2;
+  let svg = `<svg viewBox="0 0 280 280" class="donut" role="img" aria-label="Camembert pondéré">`;
   svg += `<defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="rgba(255,255,255,.6)" stroke-width="2.6"/></pattern></defs>`;
   const spans = []; let a0 = 0, curKey = null, spanStart = 0;
   for (const d of slices) {
@@ -360,20 +374,27 @@ function renderDonut(m) {
     svg += `<path d="${arcPath(cx, cy, rO, rI, a0, 360)}" fill="#e6e9f2"></path>`;
     if (360 - a0 >= 22) svg += sliceLabel(cx, cy, rO, rI, (a0 + 360) / 2, "à gagner");
   }
+  // N'affiche un nom de matière/domaine sur la part que si l'arc est assez long pour l'accueillir.
   const lbl = (a, b, t) => sliceLabel(cx, cy, rO, rI, (a + b) / 2, t);
+  const fitsOnArc = (text, a, b) => ((b - a) * Math.PI / 180) * rMid >= text.length * 5 + 4;
   if (state.colorBy === "matiere") {
-    for (const d of slices) if (d.a1 - d.a0 >= 18) { const yt = yearTag(d.id); svg += lbl(d.a0, d.a1, shortLabel(getLabel(d.s)) + (yt ? " " + yt : "")); }
-  } else { for (const g of spans) if (g.a1 - g.a0 >= 18) svg += lbl(g.a0, g.a1, groupTitleOf(g.key)); }
+    for (const d of slices) {
+      const yt = yearTag(d.id), text = shortLabel(getLabel(d.s)) + (yt ? " " + yt : "");
+      if (fitsOnArc(text, d.a0, d.a1)) svg += lbl(d.a0, d.a1, text);
+    }
+  } else {
+    for (const g of spans) { const text = groupTitleOf(g.key); if (fitsOnArc(text, g.a0, g.a1)) svg += lbl(g.a0, g.a1, text); }
+  }
 
   const men = mentionFor(m);
   let sub = state.focusLocked ? `${slices.filter((d) => d.locked).length} note(s) figée(s)` : view === "coef" ? "poids (coef)" : "moyenne /20";
-  svg += `<text x="120" y="116" text-anchor="middle" font-size="34" font-weight="800" fill="${men.color}">${fmt(m)}</text>`;
-  svg += `<text x="120" y="137" text-anchor="middle" font-size="11" fill="#5b627e">${sub}</text>`;
+  svg += `<text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="38" font-weight="800" fill="${men.color}">${fmt(m)}</text>`;
+  svg += `<text x="${cx}" y="${cy + 17}" text-anchor="middle" font-size="12" fill="#5b627e">${sub}</text>`;
   if (view === "contrib" && !state.focusLocked)
-    svg += `<text x="120" y="152" text-anchor="middle" font-size="10" fill="#5b627e">${fmt1(Math.min(100, sum / total * 100))} % de la cible ${state.target}/20</text>`;
+    svg += `<text x="${cx}" y="${cy + 33}" text-anchor="middle" font-size="10.5" fill="#5b627e">${fmt1(Math.min(100, sum / total * 100))} % de la cible ${state.target}/20</text>`;
   svg += `</svg>`;
   document.getElementById("chart").innerHTML = svg;
-  buildLegend();
+  clearLegend();
   setHint("Survole ou clique une part pour épingler 📌 son détail. Les notes figées (hachurées 🔒) sont regroupées au début.");
   wireChartInteractions();
 }
