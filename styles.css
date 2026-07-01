@@ -131,11 +131,12 @@ body {
 
 @media (max-width: 560px) { .chart-row { grid-template-columns: 1fr; } }
 
-/* ---------------- Barres empilées (colonne verticale) ---------------- */
-.chart svg.stacked { max-width: 300px; }
-
-/* ---------------- Camembert : sans légende, plus grand ---------------- */
+/* ---------------- Camembert / Treemap : sans légende, plus grands ---------------- */
 .chart svg.donut { max-width: 520px; }
+.chart svg.treemap { max-width: 560px; }
+
+/* ---------------- Domaines (radar) : figure agrandie ---------------- */
+.chart svg.radar { max-width: 600px; }
 
 /* ---------------- Boutons ---------------- */
 .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
