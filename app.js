@@ -188,6 +188,13 @@ function migrate(o) {
   return o;
 }
 function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+function resetSimulation() {
+  if (!confirm("Réinitialiser la simulation ? Toutes tes notes, cadenas et libellés personnalisés seront perdus.")) return;
+  state = { ...DEFAULTS, notes: { ...DEFAULTS.notes }, locked: { ...DEFAULTS.locked }, labels: { ...DEFAULTS.labels } };
+  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+  buildControls();
+  update();
+}
 function loadState() {
   const hash = location.hash.match(/s=([^&]+)/);
   if (hash) { const d = decodeState(hash[1]); if (d) { state = d; return; } }
@@ -563,6 +570,7 @@ function wireGlobal() {
   document.getElementById("focusLockedBtn").addEventListener("click", toggleFocusLocked);
   document.querySelectorAll(".target-select").forEach((el) => el.addEventListener("change", () => setTarget(el.value)));
   document.getElementById("printBtn").addEventListener("click", () => window.print());
+  document.getElementById("resetBtn").addEventListener("click", resetSimulation);
   document.getElementById("shareBtn").addEventListener("click", async () => {
     const url = location.origin + location.pathname + "#s=" + encodeState();
     try { history.replaceState(null, "", url); await navigator.clipboard.writeText(url); document.getElementById("shareHint").textContent = "Lien copié ✅ — colle-le où tu veux pour retrouver cette simulation."; }
